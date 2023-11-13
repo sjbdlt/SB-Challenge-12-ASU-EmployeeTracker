@@ -30,6 +30,7 @@ app.listen(PORT, () => {
 });
 
 
+
 init();
 
 function init(){
@@ -95,42 +96,42 @@ function startmenu(){
             ]      
         }   
     ]).then(({mainitemselected}) => {
-        console.log(mainitemselected);
+        //console.log(mainitemselected);
         if (mainitemselected == "listofdepartments"){
-            console.log('1');
+            //console.log('1');
             getlistofdepartments();
         }else if (mainitemselected == "listofroles"){
-            console.log('2');
+            //console.log('2');
             getlistofroles();
         }else if (mainitemselected == "listofemployees"){
-            console.log('3');
+            //console.log('3');
             getlistofemployees();
         }else if (mainitemselected == "adddepartment"){
-            console.log('4');
+            //console.log('4');
             postadddepartment();
         }else if (mainitemselected == "addrole"){
-            console.log('5');
+            //console.log('5');
             postaddrole();
         }else if (mainitemselected == "addemployee"){
-            console.log('6');
+            //console.log('6');
             postaddemployee();
         }else if (mainitemselected == "updateemployeerole"){
-            console.log('7');
+            //console.log('7');
             updateemployeerole();
         }else if (mainitemselected == "updateemployeesmanager"){
-            console.log('8');
+            //console.log('8');
             updateemployeesmanager();
         }else if (mainitemselected == "listofemployeesbymanager"){
-            console.log('9');
+            //console.log('9');
             getlistofemployeesbymanager();
         }else if (mainitemselected == "listofemployeesbydepartment"){
-            console.log('10');
+            //console.log('10');
             getlistofemployeesbydepartment()
         }else if (mainitemselected == "listdepartmentsbudget"){
-            console.log('11');
+            //console.log('11');
             getlistdepartmentsbudget();
         }else if (mainitemselected == "deletedepartment"){
-            console.log('12');
+            //console.log('12');
             deletedepartment();
         }
     })
@@ -258,7 +259,7 @@ function postaddrole(){
 
     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
     let departmentls = ""
-    db.query(`Select id, name from departments`, function(err, res){
+    db.query(`Select id as value, name from departments`, function(err, res){
         if (err) throw err;
         departmentls = res;
         console.table(res);
@@ -280,7 +281,7 @@ function postaddrole(){
             type: "list",
             name: "roldepartment",
             message: "What department is the role in?",
-            choices: [departmentls],
+            choices: departmentls,
         }
     ])
     .then(answers => {   
@@ -322,11 +323,13 @@ function postaddrole(){
 
 }
 
+
+
 function postaddemployee(){
 
     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
     let rolesls = ""
-    db.query(`Select id, title from roles`, function(err, res){
+    db.query(`Select id as value, title as name from roles`, function(err, res){
         if (err) throw err;
         rolesls = res;
         console.table(res);
@@ -335,7 +338,7 @@ function postaddemployee(){
 
     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
     let managerls = ""
-    db.query(`Select id, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as Manager from employees`, function(err, res){
+    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
         if (err) throw err;
         managerls = res;
         console.table(res);
@@ -356,13 +359,13 @@ function postaddemployee(){
             type: "list",
             name: "emplyrole",
             message: "What employees role?",
-            choices: [],
+            choices: rolesls,
         },
         {
             type: "list",
             name: "emplymgr",
             message: "Who is the employees manager?",
-            choices: [],
+            choices: managerls,
         }
     ])
     .then(answers => {
@@ -413,7 +416,7 @@ function updateemployeerole (){
 
     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
     let emplyls = ""
-    db.query(`Select id, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as employee from employees`, function(err, res){
+    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
         if (err) throw err;
         emplyls = res;
         console.table(res);
@@ -422,7 +425,7 @@ function updateemployeerole (){
 
     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
     let rolesls = ""
-    db.query(`Select id, title from roles`, function(err, res){
+    db.query(`Select id as value, title as name from roles`, function(err, res){
         if (err) throw err;
         rolesls = res;
         console.table(res);
@@ -484,7 +487,7 @@ function updateemployeesmanager(){
 
      //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
      let emplyls = ""
-     db.query(`Select id, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as employee from employees`, function(err, res){
+     db.query(`Select id as value , CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
          if (err) throw err;
          emplyls = res;
          console.table(res);
@@ -547,7 +550,7 @@ function getlistofemployeesbymanager(){
 
      //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
      let emplyls = ""
-     db.query(`Select id, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as employee from employees`, function(err, res){
+     db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
          if (err) throw err;
          emplyls = res;
          console.table(res);
@@ -598,7 +601,7 @@ function getlistofemployeesbydepartment(){
     
       //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
     let departmentls = ""
-    db.query(`Select id, name from departments`, function(err, res){
+    db.query(`Select id as value, name from departments`, function(err, res){
         if (err) throw err;
         departmentls = res;
         console.table(res);
@@ -673,7 +676,7 @@ function deletedepartment(){
 
       //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
       let departmentls = ""
-      db.query(`Select id, name from departments`, function(err, res){
+      db.query(`Select id as value, name from departments`, function(err, res){
           if (err) throw err;
           departmentls = res;
           console.table(res);
