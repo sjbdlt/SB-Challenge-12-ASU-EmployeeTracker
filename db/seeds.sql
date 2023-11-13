@@ -8,13 +8,13 @@ VALUES ("Accounting"),
 INSERT INTO roles (title, salary, department_id)
 VALUES ("CPA", 150000.00, 1),
        ("Clerk", 75000.00, 1),
-       ("Manager", 95000.00, 2),
+       ("Front Desk Manager", 95000.00, 2),
        ("Clerk", 45000.00, 2),
        ("Head Bell Keep", 35000.00, 3),
        ("Bellman", 30000.00, 3),
-       ("Manager", 85000.00, 4),
+       ("House Keeping Manager", 85000.00, 4),
        ("Assistant Manager", 65000.00, 4),
-       ("Manager", 65000.00, 5);
+       ("Food and Beverage Manager", 65000.00, 5);
 
        INSERT INTO employees (first_name, last_name, role_id, manager_id)
 VALUES ("Rob", "Chav" , 1, NULL),

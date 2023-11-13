@@ -70,7 +70,7 @@ function startmenu(){
                     value: "addemployee"
                 },
                 {   
-                    name: "Update a employee role?",
+                    name: "Update employees role?",
                     value: "updateemployeerole"
                 },
                 {   
@@ -217,7 +217,7 @@ function postadddepartment(){
         {
             type: "input",
             name: "departname",
-            message: "What department would you like to add?",
+            message: "What is the name of the department?",
         }
     ])
     .then(answers => {
@@ -256,38 +256,29 @@ function postadddepartment(){
 }
 
 function postaddrole(){
-
-    //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-    let departmentls = ""
-    db.query(`Select id as value, name from departments`, function(err, res){
-        if (err) throw err;
-        departmentls = res;
-        console.table(res);
-       // console.log(departmentls);
-    })
-
     inquirer.prompt([
         {
             type: "input",
             name: "rolname",
-            message: "What role would you like to add?",
+            message: "What is the name of the role?",
         },
         {
             type: "input",
             name: "rolsalary",
-            message: "What salary of the role?",
+            message: "What is the salary of the role?",
         },
         {
             type: "list",
             name: "roldepartment",
-            message: "What department is the role in?",
-            choices: departmentls,
+            message: "What department does the role belong to?",
+            choices: departlookup()
         }
     ])
     .then(answers => {   
         let rolname = answers.rolname
         let rolsalary = answers.rolsalary
-        let roldepartment = answers.roldepartment
+        //TODO If name is not unique how this will be wrong.
+        let roldepartment = departlookup().indexOf(answers.roldepartment) + 1
 
         const role = {
             rolname,
@@ -323,57 +314,39 @@ function postaddrole(){
 
 }
 
-
-
-function postaddemployee(){
-
-    //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-    let rolesls = ""
-    db.query(`Select id as value, title as name from roles`, function(err, res){
-        if (err) throw err;
-        rolesls = res;
-        console.table(res);
-       // console.log(departmentls);
-    })
-
-    //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
-    let managerls = ""
-    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
-        if (err) throw err;
-        managerls = res;
-        console.table(res);
-       // console.log(departmentls);
-    })
+function postaddemployee(){  
+    
     inquirer.prompt([
         {
             type: "input",
             name: "emplyfirstname",
-            message: "What employees first name?",
+            message: "What is the employee's first name?",
         },
         {
             type: "input",
             name: "emplylastname",
-            message: "What employees last name?",
+            message: "What is the employee's last name?",
         },
         {
             type: "list",
             name: "emplyrole",
-            message: "What employees role?",
-            choices: rolesls,
+            message: "What is the employee's role?",
+            choices: roleslookup(),
         },
         {
             type: "list",
             name: "emplymgr",
-            message: "Who is the employees manager?",
-            choices: managerls,
+            message: "Who is the employee's manager?",
+            choices: employeelookup(),
         }
     ])
     .then(answers => {
    
         let emplyfirstname = answers.emplyfirstname
         let emplylastname = answers.emplylastname
-        let emplyrole = answers.emplyrole
-        let emplymgr = answers.emplymgr
+        //TODO If name is not unique how this will be wrong.
+        let emplyrole = roleslookup().indexOf(answers.emplyrole) + 1
+        let emplymgr = employeelookup().indexOf(answers.emplymgr) + 1
 
         const emply = {
             emplyfirstname,
@@ -413,43 +386,24 @@ function postaddemployee(){
 
 function updateemployeerole (){
 
-
-    //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
-    let emplyls = ""
-    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
-        if (err) throw err;
-        emplyls = res;
-        console.table(res);
-    // console.log(departmentls);
-    })
-
-    //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-    let rolesls = ""
-    db.query(`Select id as value, title as name from roles`, function(err, res){
-        if (err) throw err;
-        rolesls = res;
-        console.table(res);
-    // console.log(departmentls);
-    })
-
-    inquirer.prompt([
+   inquirer.prompt([
         {
             type: "list",
             name: "selemplyname",
-            message: "Which employees role do you want to update?",
-            choices: [],
+            message: "Which employee's role do you want to update?",
+            choices: employeelookup(),
         },
         {
-            type: "input",
+            type: "list",
             name: "selemplyrole",
-            message: "What role do you want to assigned selected employee?",
-            choices: []
+            message: "Which role do you want to assign the selected employee?",
+            choices: roleslookup(),
         }
     ])
     .then(answers => {
-
-        let selectedemply = answers.selemplyname
-        let selectedrole = answers.selemplyrole
+        //TODO If name is not unique how this will be wrong.
+        let selectedemply = employeelookup().indexOf(answers.selemplyname) + 1
+        let selectedrole = roleslookup().indexOf(answers.selemplyrole) + 1
 
         const emply = {
             selectedrole
@@ -485,34 +439,24 @@ function updateemployeerole (){
 
 function updateemployeesmanager(){
 
-     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
-     let emplyls = ""
-     db.query(`Select id as value , CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
-         if (err) throw err;
-         emplyls = res;
-         console.table(res);
-     // console.log(departmentls);
-     })
- 
-      
      inquirer.prompt([
          {
              type: "list",
              name: "selemplyname",
-             message: "Which employees manger do you want to update?",
-             choices: [],
+             message: "Which employee's manger do you want to update?",
+             choices: employeelookup(),
          },
          {
-             type: "input",
+             type: "list",
              name: "selemplymanger",
-             message: "Which manager do you want to assigned selected employee?",
-             choices: []
+             message: "Which manager do you want to assign the selected employee?",
+             choices: employeelookup(),
          }
      ])
      .then(answers => {
- 
-         let selectedemply = answers.selemplyname
-         let selemplymanger = answers.selemplymanger
+        //TODO If name is not unique how this will be wrong.
+         let selectedemply = employeelookup().indexOf(answers.selemplyname) + 1
+         let selemplymanger = employeelookup().indexOf(answers.selemplymanger) + 1
  
          const emply = {
              selemplymanger
@@ -546,29 +490,19 @@ function updateemployeesmanager(){
   
 }
 
-function getlistofemployeesbymanager(){
 
-     //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER
-     let emplyls = ""
-     db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
-         if (err) throw err;
-         emplyls = res;
-         console.table(res);
-     // console.log(departmentls);
-     })
- 
-      
-     inquirer.prompt([
+function getlistofemployeesbymanager(){
+    inquirer.prompt([
          {
              type: "list",
              name: "selmngrname",
              message: "Which manager's employees do you want to see?",
-             choices: [],
+             choices: employeelookup(),
          }
      ])
      .then(answers => {
- 
-         let selmngrname = answers.selmngrname
+        //TODO If name is not unique how this will be wrong.
+        let selmngrname = employeelookup().indexOf(answers.selmngrname) + 1
  
          console.log(selmngrname);
  
@@ -598,28 +532,17 @@ function getlistofemployeesbymanager(){
 }
 
 function getlistofemployeesbydepartment(){
-    
-      //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-    let departmentls = ""
-    db.query(`Select id as value, name from departments`, function(err, res){
-        if (err) throw err;
-        departmentls = res;
-        console.table(res);
-       // console.log(departmentls);
-    })
-   
-        
-    inquirer.prompt([
+   inquirer.prompt([
         {
             type: "list",
             name: "seldepartment",
             message: "Which department's employees do you want to see?",
-            choices: [],
+            choices: departlookup(),
         }
     ])
     .then(answers => {
    
-        let seldepartment = answers.seldepartment
+        let seldepartment = departlookup().indexOf(answers.seldepartment) + 1
    
         console.log(seldepartment);
    
@@ -672,29 +595,18 @@ function getlistdepartmentsbudget(){
 }
 
 function deletedepartment(){
-    
 
-      //TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-      let departmentls = ""
-      db.query(`Select id as value, name from departments`, function(err, res){
-          if (err) throw err;
-          departmentls = res;
-          console.table(res);
-         // console.log(departmentls);
-      })
-     
-          
-      inquirer.prompt([
+    inquirer.prompt([
           {
               type: "list",
               name: "seldepartment",
-              message: "Which department's employees do you want to see?",
-              choices: [],
+              message: "Which department do you want to delete?",
+              choices: departlookup(),
           }
       ])
       .then(answers => {
      
-          let seldepartment = answers.seldepartment
+          let seldepartment = departlookup().indexOf(answers.seldepartment) + 1
      
           console.log(seldepartment);
      
@@ -721,4 +633,40 @@ function deletedepartment(){
           });
       })
       
+}
+
+//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
+const deptls = [];
+function departlookup() {
+    db.query(`Select id as value, name from departments where name is not null`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            deptls.push(res[i].name)
+        }
+    })
+    return deptls;
+}
+
+//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
+const rolels = [];
+function roleslookup() {
+    db.query(`Select id as value, IFNULL(title, "") as name from roles`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            rolels.push(res[i].name)
+        }
+    })
+    return rolels;
+}
+
+//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
+const emplyls = [];
+function employeelookup() {
+    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            emplyls.push(res[i].name)
+        }
+    })
+    return emplyls;
 }

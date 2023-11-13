@@ -1,3 +1,5 @@
+USE company_db;
+
 Select * From departments;
 
 Select * From roles;
