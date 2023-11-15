@@ -1,7 +1,7 @@
 const express = require('express');
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-const api = require('./routes/index');
+const api = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -31,13 +31,57 @@ app.listen(PORT, () => {
 
 
 
+const deptls = [];
+function departlookup() {
+    db.query(`Select id as value, name from departments where name is not null`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            deptls.push(res[i])
+        }
+    })
+    return deptls;
+}
+
+
+
+const emplyls = [];
+function employeelookup() {
+    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            emplyls.push(res[i])
+        }
+    })
+    return emplyls;
+}
+
+
+const rolels = [];
+function roleslookup() {
+    db.query(`Select id as value, IFNULL(title, "") as name from roles`, function(err, res){
+        if (err) throw err;
+        for (var i =0; i < res.length; i++){
+            rolels.push(res[i])
+        }
+    })
+    return rolels;
+}
+
+
+
 init();
 
 function init(){
     startmenu();
+    roleslookup();
+    departlookup();
+    employeelookup();
 }
 
 function startmenu(){
+
+//Populate my list choices
+  
 
     inquirer.prompt([
         {
@@ -138,80 +182,42 @@ function startmenu(){
 
 }
 
+
+//Display a list of all departments
 function getlistofdepartments(){
 
-    let requesttype = {
-        method: 'get',
-    };
-
-    //TODO SEE IF BETTER WAY TO DISPLAY DATA IN TABLE VIEW WITHOUT INDEX AND WHAT URL TO CALL FROM HERE
-    fetch('http://localhost:3001/api/department', requesttype) 
-        .then(response => { 
-            if (response.ok) { 
-            return response.json(); 
-            } else { 
-            throw new Error('API request failed'); 
-            } 
-        }) 
-        .then(data => { 
-            console.table(data); 
-            startmenu();
-        }) 
-        .catch(error => {    
-            console.error(error); 
-    });
+    const sql = db.query("Select id, name From departments", 
+    function (err, res) {
+        if (err) res.status(400).json({ error: err.message });
+        console.table(res);
+        startmenu();
+    })  
+   
 }
 
+//Display a list of all roles
 function getlistofroles(){
 
-    let requesttype = {
-        method: 'get',
-    };
-    
-    //TODO SEE IF BETTER WAY TO DISPLAY DATA IN TABLE VIEW WITHOUT INDEX AND WHAT URL TO CALL FROM HERE
-    fetch('http://localhost:3001/api/role', requesttype) 
-        .then(response => { 
-            if (response.ok) { 
-            return response.json(); 
-            } else { 
-            throw new Error('API request failed'); 
-            } 
-        }) 
-        .then(data => { 
-            console.table(data); 
-            startmenu();
-        }) 
-        .catch(error => {    
-            console.error(error); 
-    });
+    const sql = db.query("Select roles.id, title, FORMAT(salary, 2) as salary, departments.name as department From roles INNER JOIN departments on departments.id = department_id", 
+    function (err, res) {
+        if (err) res.status(400).json({ error: err.message });        
+        console.table(res);
+        startmenu();    
+    })  
 }
 
-
-
+//Display a list of all employees
 function getlistofemployees(){
   
-    let requesttype = {
-        method: 'get',
-    };
-    
-    //TODO SEE IF BETTER WAY TO DISPLAY DATA IN TABLE VIEW WITHOUT INDEX AND WHAT URL TO CALL FROM HERE
-    fetch('http://localhost:3001/api/employee', requesttype) 
-        .then(response => { 
-            if (response.ok) { 
-              return response.json(); 
-            } else { 
-              throw new Error('API request failed'); 
-            } 
-        }) 
-        .then(data => { 
-            console.table(data); 
-            startmenu();
-        }) 
-        .catch(error => {    
-            console.error(error); 
-    });
+    const sql = db.query("Select employees.id, employees.first_name, employees.last_name, roles.title, roles.salary, departments.name as department, IFNULL(e2.first_name, '') as manager_first_name, IFNULL(e2.last_name, '') as manager_last_name From employees Left Join roles on role_id = roles.id Left join departments on department_id = departments.id Left join employees as e2 on e2.ID = employees.manager_id", 
+    function (err, res) {
+        if (err) res.status(400).json({ error: err.message });
+        console.table(res);
+        startmenu();    
+    })  
 }    
 
+//Add a new department
 function postadddepartment(){
     inquirer.prompt([
         {
@@ -221,40 +227,23 @@ function postadddepartment(){
         }
     ])
     .then(answers => {
-        console.log(answers.departname);
-   
-        let name = answers.departname
+        let deptname = answers.departname;
 
-        const dept = {name}
-
-        console.log(dept);
-
-        const requesttype = {
-            method: 'POST',
-            Headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(dept),
-        };
-           
-        //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-        fetch('http://localhost:3001/api/department', requesttype) 
-            .then(response => { 
-                if (response.ok) { 
-                  return response.json(); 
-                } else { 
-                  throw new Error(response.json()); 
-                } 
-            }) 
-            .then(data => { 
-                console.log(data); 
-                startmenu();
-            }) 
-            .catch(error => {    
-                console.error(error); 
-        });
+        const sql = db.query("INSERT INTO departments SET ?", {
+            name: deptname,
+        }, function (err, res) {
+            if (err) res.status(400).json({ error: err.message });
+        })
+        console.log(`${sql.values.name} department was successfully added!`)
+       
+    })
+    .then(() => {
+        startmenu();
     })
 
 }
 
+//Add a new role
 function postaddrole(){
     inquirer.prompt([
         {
@@ -271,49 +260,30 @@ function postaddrole(){
             type: "list",
             name: "roldepartment",
             message: "What department does the role belong to?",
-            choices: departlookup()
+            choices: deptls,
         }
     ])
     .then(answers => {   
-        let rolname = answers.rolname
-        let rolsalary = answers.rolsalary
-        //TODO If name is not unique how this will be wrong.
-        let roldepartment = departlookup().indexOf(answers.roldepartment) + 1
-
-        const role = {
-            rolname,
-            rolsalary,
-            roldepartment
-        }
-
-        console.log(role);
-
-        const requesttype = {
-            method: 'POST',
-            Headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(role),
-        };
+        let rolname = answers.rolname;
+        let rolsalary = answers.rolsalary;
+        let roldepartment = answers.roldepartment;
            
-        //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-        fetch('http://localhost:3001/api/role', requesttype) 
-            .then(response => { 
-                if (response.ok) { 
-                  return response.json(); 
-                } else { 
-                  throw new Error(response.json()); 
-                } 
-            }) 
-            .then(data => { 
-                console.log(data); 
-                startmenu();
-            }) 
-            .catch(error => {    
-                console.error(error); 
-        });
-    })
+        const sql = db.query("INSERT INTO roles SET ?", {
+            title: rolname,
+            salary: rolsalary,
+            department_id: roldepartment,
+        }, function (err, res) {
+            if (err) res.status(400).json({ error: err.message });
+        })
+        console.log(`${sql.values.title} role was successfully added!`)       
 
+    })
+    .then(() => {
+        startmenu();
+    })
 }
 
+//Add a new employee
 function postaddemployee(){  
     
     inquirer.prompt([
@@ -331,59 +301,38 @@ function postaddemployee(){
             type: "list",
             name: "emplyrole",
             message: "What is the employee's role?",
-            choices: roleslookup(),
+            choices: rolels,
         },
         {
             type: "list",
             name: "emplymgr",
             message: "Who is the employee's manager?",
-            choices: employeelookup(),
+            choices: emplyls,
         }
     ])
     .then(answers => {
-   
-        let emplyfirstname = answers.emplyfirstname
-        let emplylastname = answers.emplylastname
-        //TODO If name is not unique how this will be wrong.
-        let emplyrole = roleslookup().indexOf(answers.emplyrole) + 1
-        let emplymgr = employeelookup().indexOf(answers.emplymgr) + 1
-
-        const emply = {
-            emplyfirstname,
-            emplylastname,
-            emplyrole,
-            emplymgr
-        }
-
-        console.log(emply);
-
-        const requesttype = {
-            method: 'POST',
-            Headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(emply),
-        };
-           
-        //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-        fetch('http://localhost:3001/api/employee', requesttype) 
-            .then(response => { 
-                if (response.ok) { 
-                  return response.json(); 
-                } else { 
-                  throw new Error(response.json()); 
-                } 
-            }) 
-            .then(data => { 
-                console.log(data); 
-                startmenu();
-            }) 
-            .catch(error => {    
-                console.error(error); 
-        });
+                        
+        let emplyfirstname = answers.emplyfirstname;
+        let emplylastname = answers.emplylastname;
+        let emplyrole = answers.emplyrole;
+        let emplymgr = answers.emplymgr;
+                
+        const sql = db.query("INSERT INTO employees SET ?", {
+            first_Name: emplyfirstname,
+            last_Name: emplylastname,
+            role_id: emplyrole,
+            manager_id: emplymgr,
+        }, function (err, res) {
+            if (err) res.status(400).json({ error: err.message });
+        })
+        console.log(`${sql.values.first_Name} ${sql.values.last_Name} employee was successfully added!`)          
     })
-
+    .then(() => {
+        startmenu();
+    })
 }
 
-
+//Update employeees role
 function updateemployeerole (){
 
    inquirer.prompt([
@@ -391,52 +340,33 @@ function updateemployeerole (){
             type: "list",
             name: "selemplyname",
             message: "Which employee's role do you want to update?",
-            choices: employeelookup(),
+            choices: emplyls,
         },
         {
             type: "list",
             name: "selemplyrole",
             message: "Which role do you want to assign the selected employee?",
-            choices: roleslookup(),
+            choices: rolels,
         }
     ])
     .then(answers => {
-        //TODO If name is not unique how this will be wrong.
-        let selectedemply = employeelookup().indexOf(answers.selemplyname) + 1
-        let selectedrole = roleslookup().indexOf(answers.selemplyrole) + 1
-
-        const emply = {
-            selectedrole
-        }
-
-        console.log(emply);
-
-        const requesttype = {
-            method: 'POST',
-            Headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(emply),
-        };
         
-        //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-        fetch(`http://localhost:3001/api/employee/updaterole/${selectedemply}`, requesttype) 
-            .then(response => { 
-                if (response.ok) { 
-                return response.json(); 
-                } else { 
-                throw new Error(response.json()); 
-                } 
-            }) 
-            .then(data => { 
-                console.log(data); 
-                startmenu();
-            }) 
-            .catch(error => {    
-                console.error(error); 
-        });
+        let selectedemply = answers.selemplyname;
+        let selectedrole = answers.selemplyrole;
+        
+        const sql = db.query("UPDATE employees SET ? Where ?", [{
+           role_id: selectedrole,}, {id: selectedemply}], 
+           function (err, res) {
+            if (err) res.status(400).json({ error: err.message });
+        })
+        console.log(`Employee's role was successfully updated!`)  
     })
-
+    .then(() => {
+        startmenu();
+    })
 }
 
+//Update employees manager
 function updateemployeesmanager(){
 
      inquirer.prompt([
@@ -444,156 +374,97 @@ function updateemployeesmanager(){
              type: "list",
              name: "selemplyname",
              message: "Which employee's manger do you want to update?",
-             choices: employeelookup(),
+             choices: emplyls,
          },
          {
              type: "list",
              name: "selemplymanger",
              message: "Which manager do you want to assign the selected employee?",
-             choices: employeelookup(),
+             choices: emplyls,
          }
      ])
      .then(answers => {
-        //TODO If name is not unique how this will be wrong.
-         let selectedemply = employeelookup().indexOf(answers.selemplyname) + 1
-         let selemplymanger = employeelookup().indexOf(answers.selemplymanger) + 1
- 
-         const emply = {
-             selemplymanger
-         }
- 
-         console.log(emply);
- 
-         const requesttype = {
-             method: 'POST',
-             Headers: {'Content-Type': 'application/json'},
-             body: JSON.stringify(emply),
-         };
-         
-         //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-         fetch(`http://localhost:3001/api/employee/updatemanager/${selectedemply}`, requesttype) 
-             .then(response => { 
-                 if (response.ok) { 
-                 return response.json(); 
-                 } else { 
-                 throw new Error(response.json()); 
-                 } 
-             }) 
-             .then(data => { 
-                 console.log(data); 
-                 startmenu();
-             }) 
-             .catch(error => {    
-                 console.error(error); 
-         });
+         let selectedemply = answers.selemplyname
+         let selemplymanger = answers.selemplymanger
+                 
+         const sql = db.query("UPDATE employees SET ? Where ?", [{
+            manager_id: selemplymanger,}, {id: selectedemply}], 
+            function (err, res) {
+             if (err) res.status(400).json({ error: err.message });
+         })
+         console.log(`Employee's manager was successfully updated!`)  
      })
-  
+     .then(() => {
+        startmenu();
+    })
 }
 
-
+//Display a list of employees by manager
 function getlistofemployeesbymanager(){
     inquirer.prompt([
          {
              type: "list",
              name: "selmngrname",
              message: "Which manager's employees do you want to see?",
-             choices: employeelookup(),
+             choices: emplyls,
          }
      ])
      .then(answers => {
-        //TODO If name is not unique how this will be wrong.
-        let selmngrname = employeelookup().indexOf(answers.selmngrname) + 1
- 
-         console.log(selmngrname);
- 
-         const requesttype = {
-             method: 'GET',
-             Headers: {'Content-Type': 'application/json'}
-         };
-         
-         //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-         fetch(`http://localhost:3001/api/employee/listbymanager/${selmngrname}`, requesttype) 
-             .then(response => { 
-                 if (response.ok) { 
-                 return response.json(); 
-                 } else { 
-                 throw new Error(response.json()); 
-                 } 
-             }) 
-             .then(data => { 
-                 console.table(data); 
-                 startmenu();
-             }) 
-             .catch(error => {    
-                 console.error(error); 
-         });
-     })
-  
+        let selmngrname = answers.selmngrname;
+
+        const sql = db.query("Select employees.first_name, employees.last_name From employees where ?", {
+            manager_id: selmngrname
+        },
+        function (err, res) {
+        if (err) res.status(400).json({ error: err.message });   
+        console.table(res);            
+        })
+
+    })
+    .then(ansers => {
+        startmenu();
+    })
 }
 
+//Display a list of employees by department
 function getlistofemployeesbydepartment(){
    inquirer.prompt([
         {
             type: "list",
             name: "seldepartment",
             message: "Which department's employees do you want to see?",
-            choices: departlookup(),
+            choices: deptls,
         }
     ])
     .then(answers => {
    
-        let seldepartment = departlookup().indexOf(answers.seldepartment) + 1
-   
-        console.log(seldepartment);
-   
-        const requesttype = {
-            method: 'GET',
-            Headers: {'Content-Type': 'application/json'}
-        };
-           
-        //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-        fetch(`http://localhost:3001/api/employee/listbydepartment/${seldepartment}`, requesttype) 
-            .then(response => { 
-                if (response.ok) { 
-                return response.json(); 
-                } else { 
-                throw new Error(response.json()); 
-                } 
-            }) 
-            .then(data => { 
-                console.table(data); 
-                startmenu();
-            }) 
-            .catch(error => {    
-                console.error(error); 
-        });
-    })
-    
-  }
-  
-function getlistdepartmentsbudget(){
-    let requesttype = {
-        method: 'get',
-    };
+        let seldepartment = answers.seldepartment
 
-    //TODO SEE IF BETTER WAY TO DISPLAY DATA IN TABLE VIEW WITHOUT INDEX AND WHAT URL TO CALL FROM HERE
-    fetch('http://localhost:3001/api/department/budget', requesttype) 
-        .then(response => { 
-            if (response.ok) { 
-            return response.json(); 
-            } else { 
-            throw new Error('API request failed'); 
-            } 
-        }) 
-        .then(data => { 
-            console.table(data); 
-            startmenu();
-        }) 
-        .catch(error => {    
-            console.error(error); 
-    });
+        const sql = db.query("SELECT employees.id, first_name, last_name FROM employees inner join roles on roles.id = employees.role_id Where ?", {
+            department_id: seldepartment
+        },
+        function (err, res) {
+        if (err) res.status(400).json({ error: err.message });
+        console.table(res);   
+        })
+    })
+    .then(ansers => {
+        startmenu();
+    })
+  }
+
+  //Display a list with the budget for each department
+function getlistdepartmentsbudget(){
+    
+    const sql = db.query("SELECT name as department, FORMAT(sum(salary),2) FROM departments inner join roles on roles.department_id = departments.id group by name",
+    function (err, res) {
+    if (err) res.status(400).json({ error: err.message });
+    console.table(res);
+    startmenu();    
+    })  
 }
 
+//Delete a department
 function deletedepartment(){
 
     inquirer.prompt([
@@ -601,72 +472,21 @@ function deletedepartment(){
               type: "list",
               name: "seldepartment",
               message: "Which department do you want to delete?",
-              choices: departlookup(),
+              choices: deptls,
           }
       ])
-      .then(answers => {
-     
-          let seldepartment = departlookup().indexOf(answers.seldepartment) + 1
-     
-          console.log(seldepartment);
-     
-          const requesttype = {
-              method: 'DELETE',
-              Headers: {'Content-Type': 'application/json'}
-          };
-             
-          //TODO FIX POST NOTHING GOING OVER FOR JSON VALUES AND WHAT URL TO CALL FROM HERE
-          fetch(`http://localhost:3001/api/department/${seldepartment}`, requesttype) 
-              .then(response => { 
-                  if (response.ok) { 
-                  return response.json(); 
-                  } else { 
-                  throw new Error(response.json()); 
-                  } 
-              }) 
-              .then(data => { 
-                  console.table(data); 
-                  startmenu();
-              }) 
-              .catch(error => {    
-                  console.error(error); 
-          });
+      .then(answers => {     
+          let seldepartment = answers.seldepartment;   
+
+          const sql = db.query("Delete from departments Where ?", {
+            id: seldepartment}, 
+            function (err, res) {
+             if (err) res.status(400).json({ error: err.message });
+         })
+         console.log(`Department was successfully deleted!`)       
       })
-      
+      .then(() => {
+        startmenu();
+    })
 }
 
-//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-const deptls = [];
-function departlookup() {
-    db.query(`Select id as value, name from departments where name is not null`, function(err, res){
-        if (err) throw err;
-        for (var i =0; i < res.length; i++){
-            deptls.push(res[i].name)
-        }
-    })
-    return deptls;
-}
-
-//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-const rolels = [];
-function roleslookup() {
-    db.query(`Select id as value, IFNULL(title, "") as name from roles`, function(err, res){
-        if (err) throw err;
-        for (var i =0; i < res.length; i++){
-            rolels.push(res[i].name)
-        }
-    })
-    return rolels;
-}
-
-//TODO FIGURE OUT HOW TO GET A LIST FROM A TABLE TO SHOW AS CHOICES FOR A PROMPT QUESTION IN INQUIRER WITH A VALUE
-const emplyls = [];
-function employeelookup() {
-    db.query(`Select id as value, CONCAT(IFNULL(first_name,""), ' ', IFNULL(last_name,"")) as name from employees`, function(err, res){
-        if (err) throw err;
-        for (var i =0; i < res.length; i++){
-            emplyls.push(res[i].name)
-        }
-    })
-    return emplyls;
-}

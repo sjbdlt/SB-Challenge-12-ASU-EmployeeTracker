@@ -39,7 +39,7 @@ dept.get('/budget', (req, res) => {
 dept.post('/', (req, res) => {
 
   //console.log('Im here');
-  console.log(req.name);
+  //console.log(req.body);
 
    const sql = `INSERT INTO departments (name) VALUES (?)`;
    const params = req.body.name;
