@@ -73,15 +73,15 @@ init();
 
 function init(){
     startmenu();
-    roleslookup();
-    departlookup();
-    employeelookup();
+   
 }
 
 function startmenu(){
 
 //Populate my list choices
-  
+roleslookup();
+departlookup();
+employeelookup();
 
     inquirer.prompt([
         {
@@ -188,7 +188,7 @@ function getlistofdepartments(){
 
     const sql = db.query("Select id, name From departments", 
     function (err, res) {
-        if (err) res.status(400).json({ error: err.message });
+        if (err) return res.status(400).json({ error: err.message });
         console.table(res);
         startmenu();
     })  
@@ -200,7 +200,7 @@ function getlistofroles(){
 
     const sql = db.query("Select roles.id, title, FORMAT(salary, 2) as salary, departments.name as department From roles INNER JOIN departments on departments.id = department_id", 
     function (err, res) {
-        if (err) res.status(400).json({ error: err.message });        
+        if (err) return res.status(400).json({ error: err.message });        
         console.table(res);
         startmenu();    
     })  
@@ -211,7 +211,7 @@ function getlistofemployees(){
   
     const sql = db.query("Select employees.id, employees.first_name, employees.last_name, roles.title, roles.salary, departments.name as department, IFNULL(e2.first_name, '') as manager_first_name, IFNULL(e2.last_name, '') as manager_last_name From employees Left Join roles on role_id = roles.id Left join departments on department_id = departments.id Left join employees as e2 on e2.ID = employees.manager_id", 
     function (err, res) {
-        if (err) res.status(400).json({ error: err.message });
+        if (err) return res.status(400).json({ error: err.message });
         console.table(res);
         startmenu();    
     })  
@@ -232,7 +232,7 @@ function postadddepartment(){
         const sql = db.query("INSERT INTO departments SET ?", {
             name: deptname,
         }, function (err, res) {
-            if (err) res.status(400).json({ error: err.message });
+            if (err) return res.status(400).json({ error: err.message });
         })
         console.log(`${sql.values.name} department was successfully added!`)
        
@@ -273,7 +273,7 @@ function postaddrole(){
             salary: rolsalary,
             department_id: roldepartment,
         }, function (err, res) {
-            if (err) res.status(400).json({ error: err.message });
+            if (err) return  res.status(400).json({ error: err.message });
         })
         console.log(`${sql.values.title} role was successfully added!`)       
 
@@ -323,7 +323,7 @@ function postaddemployee(){
             role_id: emplyrole,
             manager_id: emplymgr,
         }, function (err, res) {
-            if (err) res.status(400).json({ error: err.message });
+            if (err) return res.status(400).json({ error: err.message });
         })
         console.log(`${sql.values.first_Name} ${sql.values.last_Name} employee was successfully added!`)          
     })
@@ -357,7 +357,7 @@ function updateemployeerole (){
         const sql = db.query("UPDATE employees SET ? Where ?", [{
            role_id: selectedrole,}, {id: selectedemply}], 
            function (err, res) {
-            if (err) res.status(400).json({ error: err.message });
+            if (err) return res.status(400).json({ error: err.message });
         })
         console.log(`Employee's role was successfully updated!`)  
     })
@@ -390,7 +390,7 @@ function updateemployeesmanager(){
          const sql = db.query("UPDATE employees SET ? Where ?", [{
             manager_id: selemplymanger,}, {id: selectedemply}], 
             function (err, res) {
-             if (err) res.status(400).json({ error: err.message });
+             if (err) return res.status(400).json({ error: err.message });
          })
          console.log(`Employee's manager was successfully updated!`)  
      })
@@ -416,13 +416,10 @@ function getlistofemployeesbymanager(){
             manager_id: selmngrname
         },
         function (err, res) {
-        if (err) res.status(400).json({ error: err.message });   
-        console.table(res);            
+        if (err) return res.status(400).json({ error: err.message });   
+        console.table(res);   
+        startmenu();        
         })
-
-    })
-    .then(ansers => {
-        startmenu();
     })
 }
 
@@ -444,12 +441,10 @@ function getlistofemployeesbydepartment(){
             department_id: seldepartment
         },
         function (err, res) {
-        if (err) res.status(400).json({ error: err.message });
+        if (err) return  res.status(400).json({ error: err.message });        
         console.table(res);   
-        })
-    })
-    .then(ansers => {
         startmenu();
+        })
     })
   }
 
@@ -458,7 +453,7 @@ function getlistdepartmentsbudget(){
     
     const sql = db.query("SELECT name as department, FORMAT(sum(salary),2) FROM departments inner join roles on roles.department_id = departments.id group by name",
     function (err, res) {
-    if (err) res.status(400).json({ error: err.message });
+    if (err) return res.status(400).json({ error: err.message });
     console.table(res);
     startmenu();    
     })  
@@ -481,7 +476,7 @@ function deletedepartment(){
           const sql = db.query("Delete from departments Where ?", {
             id: seldepartment}, 
             function (err, res) {
-             if (err) res.status(400).json({ error: err.message });
+             if (err) return res.status(400).json({ error: err.message });
          })
          console.log(`Department was successfully deleted!`)       
       })
